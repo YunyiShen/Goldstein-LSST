@@ -11,7 +11,7 @@ pd.options.mode.chained_assignment = None
 
 
 
-def simulate_lsstLC(sed_surface, spec_time, # time in days
+def simulate_lsstLC(Flambda, spec_time, # time in days
                     spec_wavelengths, 
                     filters_encoding = {"u": 0, "g": 1, "r": 2, "i": 3, "z": 4, "y": 5},
                     filters_loc = "./data/filters/LSST",
@@ -28,7 +28,7 @@ def simulate_lsstLC(sed_surface, spec_time, # time in days
     Simulate LSST light curves for a given SED surface and time.
         The SED should be in observer frame (i.e., has redshift), and the time should be in days.
     Parameters:
-    - sed_surface: 2D array of SED surface fluxes, specifically Fnu (time x wavelength)
+    - Flambda: 2D array of SED surface fluxes, specifically Fnu (time x wavelength)
     - spec_time: 1D array of time values (in days)
     - spec_wavelengths: 1D array of wavelength values (in Angstrom)
     - filters_encoding: Dictionary mapping filter names to indices
@@ -76,13 +76,13 @@ def simulate_lsstLC(sed_surface, spec_time, # time in days
     ###### generate events ######
     # Generate num_points random coordinates
     num_events = 1
-    ori_sed_surface = sed_surface
+    ori_Flambda = Flambda
     ori_spec_time = spec_time
     ori_spec_wavelengths = spec_wavelengths
     #if randomly generating locations, uncomment below
     for _ in range(max_retry_location):
         # reset the original values
-        sed_surface = ori_sed_surface
+        Flambda = ori_Flambda
         spec_time = ori_spec_time
         spec_wavelengths = ori_spec_wavelengths
 
@@ -126,7 +126,7 @@ def simulate_lsstLC(sed_surface, spec_time, # time in days
         if len(df_obs) > minimum_LC_size:
         #resample the SED surface to the times of the observations
             
-            sed_surface = interp1d(spec_time, sed_surface, axis=0, bounds_error=False, fill_value=0)(new_s)
+            Flambda = interp1d(spec_time, Flambda, axis=0, bounds_error=False, fill_value=0)(new_s)
             spec_time = new_s
             
             # phase
@@ -155,7 +155,7 @@ def simulate_lsstLC(sed_surface, spec_time, # time in days
                 wavelengths = bandpass.wave  # Bandpass wavelengths in Angstrom
                 throughput = bandpass.throughput  # Bandpass throughput
 
-                spec_flux_at_time = sed_surface[i, :]
+                spec_flux_at_time = Flambda[i, :]
 
                 # Interpolate the spectrum onto the bandpass wavelength grid
                 spec_flux_interp = interp1d(spec_wavelengths, spec_flux_at_time, bounds_error=False, fill_value=0)(wavelengths)
