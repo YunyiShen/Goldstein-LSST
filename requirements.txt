@@ -1,0 +1,6 @@
+cosmolopy==0.4.1
+datasets==3.5.0
+h5py==3.13.0
+LSSTsimu==0.0.1
+matplotlib==3.10.1
+pysynphot==0.0.0

@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 from scipy.signal import medfilt
 import sys
 from astropy.cosmology import FlatLambdaCDM
+import re
 
 
 h = 6.626e-27  # Planck's constant (erg·s)
@@ -73,44 +74,42 @@ def get_goldstein_luminosity(filename):
     - tim: time in days
     - lam: wavelength in Angstroms
     - Flambda: flux in erg/s/cm^2/A
-    - peak: index of the peak flux
     - params: parameters of the simulation
     '''
     with h5py.File(filename, 'r') as f:
         tim = np.array(f['time'])/86400 # in days
         lam = magnitudes.nu_lambda(np.array(f['nu'])) # frequency to wavelength
         Lnu = np.array(f['Lnu']) # luminosity in erg/s/angstroms
-        Fnu = np.array(f['Lnu']) / (4. * math.pi * (10*cc.pc_cm)**2) # to absolute flux, at 10 pc
-        total_brightness = np.sum(Fnu, axis=1)
-        peak = tim[np.argmax(total_brightness)]
-        sed_surface = Fnu * c_AAs/lam[None,:]**2 # Flambda
         # get simulation parameters from filename
         params = re.findall(r'[-+]?\d*\.\d+e[-+]?\d+', filename)
         params = [float(i) for i in params]
         params = np.array(params)
     
-    return tim, lam, Fnu, Lnu, peak, params
+    return Lnu, tim, lam, params
 
 
-def sed_frame_change(Lnu, z, time, wavelengths, cosmo = FlatLambdaCDM(H0=70, Om0=0.3, Tcmb0=2.725)):
+def sed_frame_change(Lnu, time, wavelengths, z, cosmo = FlatLambdaCDM(H0=70, Om0=0.3, Tcmb0=2.725)):
     """
     get SED Flambda to the observer frame.
 
     Parameters:
         Lnu (ndarray): luminosity in erg/s/angstroms at source.
-        z (float): Redshift to the transient.
         time (ndarray): Time array in seconds.
         wavelengths (ndarray): Wavelengths in Angstroms.
+        z (float): Redshift to the transient.
         cosmo (FlatLambdaCDM): Cosmology object (default is FlatLambdaCDM with H0=70, Om0=0.3, Tcmb0=2.725).
 
     Returns:
         tuple: Time in observer frame, wavelengths in observer frame, and SED surface in observer frame.
     """
+    Lnu += 1e-5 # to avoid zero flux
+
     time = time * (1 + z)
     wavelengths = wavelengths * (1 + z)
     Llum = cosmo.luminosity_distance(z) # Mpc
+    #breakpoint()
     Llum = Llum.to(u.cm).value # luminosity distance in cm
     Fnu = Lnu / (4 * pi * Llum**2 * (1 + z)) # to flux on earth
     Flambda = Fnu * c_AAs / wavelengths[None, :]**2 # Flambda
 
-    return time, wavelengths, Flambda
+    return Flambda, time, wavelengths, Fnu
