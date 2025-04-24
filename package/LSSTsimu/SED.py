@@ -103,7 +103,6 @@ def sed_frame_change(Lnu, time, wavelengths, z, cosmo = FlatLambdaCDM(H0=70, Om0
         tuple: Time in observer frame, wavelengths in observer frame, and SED surface in observer frame.
     """
     Lnu += 1e-5 # to avoid zero flux
-
     time = time * (1 + z)
     wavelengths = wavelengths * (1 + z)
     Llum = cosmo.luminosity_distance(z) # Mpc

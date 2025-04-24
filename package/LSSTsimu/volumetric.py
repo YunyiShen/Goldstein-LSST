@@ -3,7 +3,9 @@ import cosmolopy
 from astropy.cosmology import FlatLambdaCDM
 
 
-def volumetric_redshift(n_events, n_year = None,cosmo = FlatLambdaCDM(H0=70, Om0=0.3, Tcmb0=2.725),r_v=2.42e-5, z_min=0.1, z_max=1.0, num_bins=100):
+def volumetric_redshift(n_events, n_year = None,
+                        cosmo = FlatLambdaCDM(H0=70, Om0=0.3, Tcmb0=2.725),
+                        r_v=2.42e-5, z_min=0.1, z_max=1.0, num_bins=100):
     """
     generate redshift distribution of supernovae
     Simulate the redshift distribution of supernovae using a volumetric rate.

@@ -314,8 +314,9 @@ def simulate_lsstLCraw(Flambda, time, # time in days
     - photomag: 1D array of flux values
     - photoerror: 1D array of error values
     - phototime: 1D array of time values (in days)
+    - photosnr: 1D array of SNR values
     - photomask: 1D array of mask values (1 for valid, 0 for invalid)
-    Can be all NAs
+    - date_Flambda: 1D array of time values aligned with Flambda (in mjd days)
     """
 
 
@@ -387,7 +388,7 @@ def simulate_lsstLCraw(Flambda, time, # time in days
     #breakpoint()
     if len(df_obs) == 0: # no observations
         tmp = np.zeros(len_per_filter * 6)
-        return tmp + np.nan, tmp + np.nan, tmp + np.nan, tmp + np.nan, tmp
+        return tmp + np.nan, tmp + np.nan, tmp + np.nan, tmp + np.nan, tmp + np.nan, tmp, ori_spec_time+start_mjd 
     #print("Observation captured")
     Flambda = interp1d(time, Flambda, axis=0, bounds_error=False, fill_value=0)(new_s)
     time = new_s
@@ -465,7 +466,7 @@ def simulate_lsstLCraw(Flambda, time, # time in days
     if np.sum(source_counts) == 0:
         # no signal at all
         tmp = np.zeros(len_per_filter * 6)
-        return tmp + np.nan, tmp + np.nan, tmp + np.nan, tmp + np.nan, tmp
+        return tmp + np.nan, tmp + np.nan, tmp + np.nan, tmp + np.nan, tmp + np.nan, tmp, ori_spec_time+start_mjd 
             
     # Compute Signal-to-Noise Ratio (SNR)
     snr = source_counts / np.sqrt(source_counts / gain + (sky_counts / gain + readout_noise**2) * n_eff)
@@ -481,6 +482,7 @@ def simulate_lsstLCraw(Flambda, time, # time in days
     photomask = []
     phototime = []
     photoerror = []
+    photosnr = []
     encod = 0
     #breakpoint()
             
@@ -506,11 +508,13 @@ def simulate_lsstLCraw(Flambda, time, # time in days
         phototime_tmp = np.zeros(len_per_filter)
         photomask_tmp = np.zeros(len_per_filter)
         photoerror_tmp = np.zeros(len_per_filter)
+        photosnr_tmp = np.zeros(len_per_filter)
         photoband_tmp[:len_this_band] = encod
         photoflux_tmp[:len_this_band] = noisy_mags[flt_idx]
         phototime_tmp[:len_this_band] = time[flt_idx]
         photomask_tmp[:len_this_band] = 1
         photoerror_tmp[:len_this_band] = mag_err[flt_idx]
+        photosnr_tmp[:len_this_band] = snr[flt_idx]
 
         #plt.scatter(phototime_tmp, photoflux_tmp, label=flt)
 
@@ -523,6 +527,7 @@ def simulate_lsstLCraw(Flambda, time, # time in days
         photomask.append(photomask_tmp)
         phototime.append(phototime_tmp)
         photoerror.append(photoerror_tmp)
+        photosnr.append(photosnr_tmp)
         encod += 1
     
     # flat
@@ -531,6 +536,7 @@ def simulate_lsstLCraw(Flambda, time, # time in days
     phototime = np.array(phototime).flatten()
     photoerror = np.array(photoerror).flatten()
     photomask = np.array(photomask).flatten()
+    photosnr = np.array(photosnr).flatten()
 
 
     '''
@@ -545,7 +551,31 @@ def simulate_lsstLCraw(Flambda, time, # time in days
     #breakpoint()
     '''
     #breakpoint()  
-    return photoband, photomag, phototime, photoerror, photomask
+    return photoband, photomag, phototime, photoerror, photosnr, photomask, ori_spec_time+start_mjd
+
+def snr_cut(photoband, photosnr, photomas, maxsnr = 15, minband = 2):
+    """
+    Apply a signal-to-noise ratio (SNR) cut to the light curve data.
+    
+    Parameters:
+    - photoband: 1D array of filter indices
+    - photosnr: 1D array of SNR values
+    - photomas: 1D array of mask values (1 for valid, 0 for invalid)
+    - maxsnr: Maximum SNR value to keep
+    - minband: Minimum number of bands required
+    
+    Returns:
+    - keepornot: boolean indicating whether the light curve passes the SNR cut
+    """
+    
+    n_bands_exceeds_SNRcut = 0
+    for bnd in range(6):
+        idx = np.where(photoband == bnd)[0]
+        if len(idx) > 0:
+            n_bands_exceeds_SNRcut += int(np.sum(photosnr[idx] > maxsnr) > 0)
+        if n_bands_exceeds_SNRcut >= minband:
+            return True
+    return False
 
 
 import matplotlib.pyplot as plt
