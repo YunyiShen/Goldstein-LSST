@@ -50,7 +50,7 @@ def volumetric_redshift(n_events, n_year = None,
             redshifts += [sampled_redshifts]
     redshifts = np.concatenate(redshifts)
     # Sort redshifts
-    redshifts.sort()
+    #redshifts.sort()
     #return redshifts
     return supernovae_counts, redshifts
 

@@ -2,3 +2,4 @@ tests
 package/LSSTsimu.egg-info
 package/LSSTsimu/__pycache__
 package/LSSTsimu/*/__pycache__
+goldstein_lsstLC

@@ -7,6 +7,7 @@ import astropy.units as u
 import json
 from tqdm import tqdm
 import numpy as np
+from datasets import Dataset, DatasetDict
 
 
 
@@ -85,7 +86,7 @@ def single_goldstein_lsst_data(Lnu,time, # time in days
     res['LC_mask'] = photomask
     
     ### redshift and parameters ###
-    res['redshift'] = z
+    res['redshift'] = np.array(z)
     res['goldstein_params'] = parameters
 
     ### spectra ###
@@ -97,7 +98,7 @@ def single_goldstein_lsst_data(Lnu,time, # time in days
     spectrum = ourFlambda * (ourwavelength[None,:]**2 / (c)) # convert to Fnu
     spectrum = spectrum[:, np.logical_and(ourwavelength >= wavelength_range[0], 
                         ourwavelength <= wavelength_range[1])]
-    res['spectrum'] = spectrum[rand_int]
+    res['spectrum'] = spectrum[rand_int].value
     res['spectrum_wavelength'] = ourwavelength[np.logical_and(ourwavelength >= wavelength_range[0], 
                         ourwavelength <= wavelength_range[1])]
     
@@ -116,7 +117,7 @@ def single_goldstein_lsst_data(Lnu,time, # time in days
 def simulate_goldstein_lsst_data(list_of_events, 
                      num_samples = None, 
                      n_year = None,
-                     file_name = "goldstein.jsonl",
+                     file_name = "goldstein",
                      max_try = None, 
                      r_v=2.42e-5, z_min=0.1, z_max=1.0, num_bins=100,
                      save_every = None, 
@@ -151,7 +152,7 @@ def simulate_goldstein_lsst_data(list_of_events,
     assert num_samples is not None or n_year is not None, "one of num_samples or n_year has to be given"
 
     if max_try is None and n_year is None:
-        max_try = num_samples * 100
+        max_try = num_samples * 200
     
     _, nominate_z = volumetric_redshift(max_try, n_year = n_year,
                         cosmo = cosmo,
@@ -161,8 +162,11 @@ def simulate_goldstein_lsst_data(list_of_events,
     events = []
     how_many_we_got = 0
     zs = []
-
-    for i, z in tqdm(enumerate(nominate_z.tolist())):
+    batch = 0
+    total_hit = 0
+    print("start simulating...")
+    pbar = tqdm(nominate_z.tolist())
+    for i, z in enumerate(pbar):
         # randomly choose a goldstein event
         event = np.random.choice(list_of_events)
         Lnu, tim, lam, params = get_goldstein_luminosity(event)
@@ -180,19 +184,26 @@ def simulate_goldstein_lsst_data(list_of_events,
         if data_we_got is not None:
             events.append(data_we_got)
             how_many_we_got += 1
+            total_hit += 1
             zs.append(z)
+            #breakpoint()
         
-        if (i+1) % save_every == 0:
-            with open(file_name, "w") as f:
-                for ex in events:
-                    f.write(json.dumps(ex) + "\n") 
-        
+        if how_many_we_got == save_every:
+            
+            filename_dump = f"{file_name}/batch{batch}"
+            #breakpoint()
+            huggin_dataset = Dataset.from_list(events)
+            huggin_dataset.save_to_disk(filename_dump)
+            batch += 1
+            how_many_we_got = 0
+            events = []
         if how_many_we_got == num_samples and n_year is None: # we targeting fix number of samples
             break
+        pbar.set_postfix(total_detection=f"{total_hit}")
         
-    with open(file_name, "w") as f:
-        for ex in events:
-            f.write(json.dumps(ex) + "\n")
+    filename_dump = f"{file_name}_batch{batch}"
+    huggin_dataset = Dataset.from_list(events)
+    huggin_dataset.save_to_disk(filename_dump)
     
     return np.array(zs)
 

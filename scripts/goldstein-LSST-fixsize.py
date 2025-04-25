@@ -11,7 +11,8 @@ def main():
                                     maxsnr = 15, minband = 2,
                                     min_measures = 10,
                                     len_per_filter = 20,
-                                file_name = "../goldstein_lsstLC/goldstein_20k_train_maxsnr15_minband2_minmeasures10.jsonl")
+                                    save_every = 1000,
+                                file_name = "../goldstein_lsstLC/goldstein_20k_train_maxsnr15_minband2_minmeasures10/train")
 
 
     goldstein_test_list = np.loadtxt('../goldstein/goldstein_test_42.csv', dtype=str, delimiter=',')
@@ -20,9 +21,10 @@ def main():
                                     maxsnr = 15, minband = 2,
                                     min_measures = 10,
                                     len_per_filter = 20,
-                                file_name = "../goldstein_lsstLC/goldstein_20k_test_maxsnr15_minband2_minmeasures10.jsonl")
+                                    save_every = 1000,
+                                file_name = "../goldstein_lsstLC/goldstein_20k_test_maxsnr15_minband2_minmeasures10/test")
     
-    np.savez("zs", train = zs_train, test = zs_test)
+    np.savez("../goldstein_lsstLC/goldstein_20k_test_maxsnr15_minband2_minmeasures10/zs.npz", train = zs_train, test = zs_test)
 
 
 
