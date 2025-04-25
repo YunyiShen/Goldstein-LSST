@@ -167,13 +167,15 @@ def simulate_goldstein_lsst_data(list_of_events,
                         cosmo = cosmo,
                         r_v=r_v, z_min=z_min, z_max=z_max, num_bins=num_bins)
     if save_every is None:
-        save_every = len(nominate_z) // 20
+        save_every = 100
     events = []
     how_many_we_got = 0
     zs = []
     batch = 0
     total_hit = 0
-    print("start simulating...")
+    if n_year is not None:
+        num_samples = len(nominate_z)
+    print(f"start simulating... targeting samplesize {num_samples}")
     pbar = tqdm(nominate_z.tolist())
     for i, z in enumerate(pbar):
         # randomly choose a goldstein event
@@ -209,7 +211,7 @@ def simulate_goldstein_lsst_data(list_of_events,
             how_many_we_got = 0
             events = []
             gc.collect()
-        if how_many_we_got == num_samples and n_year is None: # we targeting fix number of samples
+        if total_hit == num_samples and n_year is None: # we targeting fix number of samples
             break
         pbar.set_postfix(total_detection=f"{total_hit}")
     

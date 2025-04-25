@@ -35,13 +35,13 @@ def main():
 
     np.random.seed(jobid + initseed)
 
-    print(f"maxsnr:{maxsnr}, minband:{minband}, min_measures:{min_measures}, samplesize:{samplesize}")
+    print(f"maxsnr:{maxsnr}, minband:{minband}, min_measures:{min_measures}, samplesize:{samplesize}, totaljobs:{totaljobs}")
 
     if samplesize % totaljobs != 0:
         warnings.warn("Target sample size is not divisible to number of jobs, this may result undesired samplesize")
 
     subfolder = f"goldstein_{samplesize//1000}k_train_maxsnr{maxsnr}_minband{minband}_minmeasures{min_measures}"
-
+    #breakpoint()
     goldstein_train_list = np.loadtxt('../goldstein/goldstein_train_42.csv', dtype=str, delimiter=',')
     train_list = np.array(["../goldstein/" + i for i in goldstein_train_list])
     zs_train = simulate_goldstein_lsst_data(train_list, samplesize//totaljobs, 
