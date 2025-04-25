@@ -10,6 +10,7 @@ import numpy as np
 from datasets import Dataset, DatasetDict
 import pandas as pd
 from importlib import resources
+import gc
 
 
 
@@ -202,10 +203,12 @@ def simulate_goldstein_lsst_data(list_of_events,
             filename_dump = f"{file_name}/batch{batch}"
             #breakpoint()
             huggin_dataset = Dataset.from_list(events)
+            huggin_dataset.set_format("arrow")
             huggin_dataset.save_to_disk(filename_dump)
             batch += 1
             how_many_we_got = 0
             events = []
+            gc.collect()
         if how_many_we_got == num_samples and n_year is None: # we targeting fix number of samples
             break
         pbar.set_postfix(total_detection=f"{total_hit}")
@@ -213,6 +216,7 @@ def simulate_goldstein_lsst_data(list_of_events,
     if len(events) > 0 and save: # if just want to get zs, for debugging
         filename_dump = f"{file_name}_batch{batch}"
         huggin_dataset = Dataset.from_list(events)
+        huggin_dataset.set_format("arrow")
         huggin_dataset.save_to_disk(filename_dump)
     
     return np.array(zs)
