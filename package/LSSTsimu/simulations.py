@@ -75,8 +75,8 @@ def single_goldstein_lsst_data(Lnu,time, # time in days
     # get the light curve
     photoband, photomag, phototime, photoerror, photosnr, photomask, mjd = simulate_lsstLCraw(ourFlambda, ourtime, # time in days
                     ourwavelength, len_per_filter = len_per_filter, LSSTschedule = LSSTschedule)
-    pass_snr = snr_cut(photoband, photosnr, photomag, maxsnr, minband)
-    if not pass_snr or np.sum(photomask) < min_measures:
+    pass_snr = snr_cut(photoband, photosnr, photomask, maxsnr, minband)
+    if (not pass_snr) or (np.sum(photomask) < min_measures):
         return None
 
     res = {}

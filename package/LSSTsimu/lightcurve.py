@@ -336,7 +336,7 @@ def simulate_lsstLCraw(Flambda, time, # time in days
     gain = 2.2  # Gain in electrons/photon
     fov = 3.5 #degrees on each side
 
-    tmax_d = 80 # max phase of the transient in days
+    tmax_d = 100 # max phase of the transient in days
     tmax_s = tmax_d
 
     #cosmo = FlatLambdaCDM(H0=70, Om0=0.3, Tcmb0=2.725) # flat Lambda CDM cosmology
@@ -553,21 +553,21 @@ def simulate_lsstLCraw(Flambda, time, # time in days
     #breakpoint()  
     return photoband, photomag, phototime, photoerror, photosnr, photomask, ori_spec_time+start_mjd
 
-def snr_cut(photoband, photosnr, photomas, maxsnr = 15, minband = 2):
+def snr_cut(photoband, photosnr, photomask, maxsnr = 15, minband = 2):
     """
     Apply a signal-to-noise ratio (SNR) cut to the light curve data.
     
     Parameters:
     - photoband: 1D array of filter indices
     - photosnr: 1D array of SNR values
-    - photomas: 1D array of mask values (1 for valid, 0 for invalid)
+    - photomask: 1D array of mask values (1 for valid, 0 for invalid)
     - maxsnr: Maximum SNR value to keep
     - minband: Minimum number of bands required
     
     Returns:
     - keepornot: boolean indicating whether the light curve passes the SNR cut
     """
-    
+    photosnr = photosnr * photomask # mask out non observations
     n_bands_exceeds_SNRcut = 0
     for bnd in range(6):
         idx = np.where(photoband == bnd)[0]
