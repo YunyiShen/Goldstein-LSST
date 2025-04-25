@@ -19,8 +19,10 @@ def main():
     parser.add_argument('--saveevery', type=int, default = 500, help='Number of training samples targeted')
     parser.add_argument('--jobid', type = int, default = 0, help = 'jobid for parallelism')
     parser.add_argument('--totaljobs', type = int, default = 1, help = 'total number of jobs for parallelism')
+    parser.add_argument('--seed', type = int, default = 42, help = 'seed for job 0')
     # Parse the arguments
     args = parser.parse_args()
+    
     
 
     maxsnr = args.maxsnr
@@ -29,6 +31,9 @@ def main():
     samplesize = args.samplesize
     totaljobs = args.totaljobs
     jobid = args.jobid
+    initseed = args.seed
+
+    np.random.seed(jobid + initseed)
 
     print(f"maxsnr:{maxsnr}, minband:{minband}, min_measures:{min_measures}, samplesize:{samplesize}")
 
