@@ -61,7 +61,7 @@ def main():
                                     save_every = args.saveevery,
                                 file_name = f"../goldstein_lsstLC/{subfolder}/test/job_{jobid}")
     
-    np.savez(f"../goldstein_lsstLC/{subfolder}/zs.npz", train = zs_train, test = zs_test)
+    np.savez(f"../goldstein_lsstLC/{subfolder}/zs_job_{jobid}.npz", train = zs_train, test = zs_test)
 
 
 
