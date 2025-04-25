@@ -49,6 +49,8 @@ def volumetric_redshift(n_events, n_year = None,
             sampled_redshifts = np.random.uniform(z_low, z_high, int(N_z)) # assume that we uniformly sample redshifts within that bin, obviously this is less of an effect as the number of bins increases
             redshifts += [sampled_redshifts]
     redshifts = np.concatenate(redshifts)
+    np.random.shuffle(redshifts)
+    
     # Sort redshifts
     #redshifts.sort()
     #return redshifts

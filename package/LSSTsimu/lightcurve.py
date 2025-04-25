@@ -6,7 +6,7 @@ from scipy.integrate import simpson as simps
 from scipy.interpolate import interp1d
 import numpy as np
 import pysynphot as S
-import cosmolopy
+#import cosmolopy
 pd.options.mode.chained_assignment = None 
 from importlib import resources
 

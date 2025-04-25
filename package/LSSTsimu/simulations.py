@@ -8,6 +8,8 @@ import json
 from tqdm import tqdm
 import numpy as np
 from datasets import Dataset, DatasetDict
+import pandas as pd
+from importlib import resources
 
 
 
@@ -19,7 +21,8 @@ def single_goldstein_lsst_data(Lnu,time, # time in days
                      len_per_filter = 20,
                      phase_range = None,
                      cosmo = FlatLambdaCDM(H0=70, Om0=0.3, Tcmb0=2.725),
-                     wavelength_range = [2000, 10000]
+                     wavelength_range = [2000, 10000],
+                     LSSTschedule = pd.read_pickle(resources.path("LSSTsimu.data","baseline_v3.3_10yrs.pkl"))
                      ):
     """
     Simulate a single LSST light curve together with some spectra measures at redshift z.
@@ -51,11 +54,11 @@ def single_goldstein_lsst_data(Lnu,time, # time in days
         spectrum_mjd: the time of the spectrum on earth
         spectrum: the spectrum, in Fnu, on earth
         spectrum_wavelength: the wavelength of the spectrum, on earth
-        Flambda_ours: the SED, in Flambda, on earth
-        sed_time_ours: the time of the SED, in days
-        sed_wavelength_ours: the wavelength of the SED, in Angstrom
+        (no more) Flambda_ours: the SED, in Flambda, on earth
+        sed_time_ours: the time of the SED, in mjd
+        (no more) sed_wavelength_ours: the wavelength of the SED, in Angstrom
         Lnu_emission: the SED, in Lnu, at the source
-        sed_time_emission: the time of the SED, in days
+        sed_time_emission: the time of the SED, in days from ``detection''
         sed_wavelength_emission: the wavelength of the SED, at the source
 
         or none if the SNR is too low
@@ -71,7 +74,7 @@ def single_goldstein_lsst_data(Lnu,time, # time in days
     #total_brightness_ours = np.sum(ourFlambda, axis=1)
     # get the light curve
     photoband, photomag, phototime, photoerror, photosnr, photomask, mjd = simulate_lsstLCraw(ourFlambda, ourtime, # time in days
-                    ourwavelength, len_per_filter = len_per_filter)
+                    ourwavelength, len_per_filter = len_per_filter, LSSTschedule = LSSTschedule)
     pass_snr = snr_cut(photoband, photosnr, photomag, maxsnr, minband)
     if not pass_snr or np.sum(photomask) < min_measures:
         return None
@@ -103,9 +106,9 @@ def single_goldstein_lsst_data(Lnu,time, # time in days
                         ourwavelength <= wavelength_range[1])]
     
     ### whole sed ###
-    res['Flambda_ours'] = ourFlambda
+    #res['Flambda_ours'] = ourFlambda
     res['sed_time_ours'] = mjd
-    res['sed_wavelength_ours'] = ourwavelength
+    #res['sed_wavelength_ours'] = ourwavelength
 
     res['Lnu_emission'] = Lnu
     res['sed_time_emission'] = time
@@ -126,7 +129,10 @@ def simulate_goldstein_lsst_data(list_of_events,
                      len_per_filter = 20,
                      phase_range = None,
                      cosmo = FlatLambdaCDM(H0=70, Om0=0.3, Tcmb0=2.725),
-                     wavelength_range = [2000, 10000]):
+                     wavelength_range = [2000, 10000], 
+                     LSSTschedule = pd.read_pickle(resources.path("LSSTsimu.data","baseline_v3.3_10yrs.pkl")),
+                     save = True
+                     ):
     """
     Simulate a list of LSST light curves together with some spectra measures at redshift z.
     Arguments:
@@ -146,6 +152,8 @@ def simulate_goldstein_lsst_data(list_of_events,
         phase_range: the range of phases to choose from for spectra
         cosmo: cosmology object to use for distance calculations
         wavelength_range: range of wavelengths to consider for spectra
+        LSSTschedule: a pd dataframe for LSST schedule
+        save: whether to save data onto disk
     return:
         a list of dictionaries with the same keys as above
     """
@@ -179,7 +187,8 @@ def simulate_goldstein_lsst_data(list_of_events,
                      len_per_filter,
                      phase_range,
                      cosmo,
-                     wavelength_range
+                     wavelength_range,
+                     LSSTschedule
                      )
         if data_we_got is not None:
             events.append(data_we_got)
@@ -188,7 +197,7 @@ def simulate_goldstein_lsst_data(list_of_events,
             zs.append(z)
             #breakpoint()
         
-        if how_many_we_got == save_every:
+        if how_many_we_got == save_every and save:
             
             filename_dump = f"{file_name}/batch{batch}"
             #breakpoint()
@@ -200,10 +209,11 @@ def simulate_goldstein_lsst_data(list_of_events,
         if how_many_we_got == num_samples and n_year is None: # we targeting fix number of samples
             break
         pbar.set_postfix(total_detection=f"{total_hit}")
-        
-    filename_dump = f"{file_name}_batch{batch}"
-    huggin_dataset = Dataset.from_list(events)
-    huggin_dataset.save_to_disk(filename_dump)
+    
+    if len(events) > 0 and save: # if just want to get zs, for debugging
+        filename_dump = f"{file_name}_batch{batch}"
+        huggin_dataset = Dataset.from_list(events)
+        huggin_dataset.save_to_disk(filename_dump)
     
     return np.array(zs)
 
